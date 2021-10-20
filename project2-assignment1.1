@@ -15,12 +15,10 @@ let latestData = "waiting for data";  // you'll use this to write incoming data 
 let splitter;
 let diameter0 = 0, diameter1 = 0, diameter2 = 0;
 
-let osc1, osc2, osc3, fft;
 
 let song;
 let amp;
 let c;
-var volhistory = [];
 
 //function preload() {
   // Load a sound file
@@ -198,10 +196,4 @@ function mouseClicked(){
     getAudioContext().resume();
     console.log("getAudioContext().state" + getAudioContext().state);
   }
-  };
-  
-
-
-  
-
- 
+};
