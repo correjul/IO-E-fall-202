@@ -1,0 +1,201 @@
+/* 
+October 2021 - Julia Correia
+Audio visualization with user input from Arduino sensors
+
+Inpiration from
+August 2019 - Doug Whitton 
+play 3 analog sensors that output sound and circle graphic
+The Arduino file that's running is "threeSensorExample"
+*/
+
+let osc;
+let playing = false;
+let serial;
+let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
+let splitter;
+let diameter0 = 0, diameter1 = 0, diameter2 = 0, diameter3 = 0;
+
+let song;
+let amp;
+let c, w, h, w2, h2;
+
+
+function loaded() {
+  song.play();
+}
+
+function setup() {
+  
+  createCanvas(windowWidth, windowHeight);
+
+///////////////////////////////////////////////////////////////////
+    //Begin serialport library methods, this is using callbacks
+///////////////////////////////////////////////////////////////////    
+    
+
+  // Instantiate our SerialPort object
+  serial = new p5.SerialPort();
+
+  // Get a list the ports available
+  // You should have a callback defined to see the results
+  serial.list();
+  console.log("serial.list()   ", serial.list());
+
+  //////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////
+  // Assuming our Arduino is connected, let's open the connection to it
+  // Change this to the name of your arduino's serial port
+  serial.open("COM3");
+ /////////////////////////////////////////////////////////////////////////////
+ ///////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////
+  // Here are the callbacks that you can register
+
+  // When we connect to the underlying server
+  serial.on('connected', serverConnected);
+
+  // When we get a list of serial ports that are available
+  serial.on('list', gotList);
+  // OR
+  //serial.onList(gotList);
+
+  // When we some data from the serial port
+  serial.on('data', gotData);
+  // OR
+  //serial.onData(gotData);
+
+  // When or if we get an error
+  serial.on('error', gotError);
+  // OR
+  //serial.onError(gotError);
+
+  // When our serial port is opened and ready for read/write
+  serial.on('open', gotOpen);
+  // OR
+  //serial.onOpen(gotOpen);
+
+  // Callback to get the raw data, as it comes in for handling yourself
+  //serial.on('rawdata', gotRawData);
+  // OR
+  //serial.onRawData(gotRawData);
+  song = createAudio('sound2.mp3', loaded);
+  amp = new p5.Amplitude();
+  song.loop();
+ 
+}
+////////////////////////////////////////////////////////////////////////////
+// End serialport callbacks
+///////////////////////////////////////////////////////////////////////////
+
+
+fft = new p5.FFT();
+
+// We are connected and ready to go
+function serverConnected() {
+  console.log("Connected to Server");
+}
+
+// Got the list of ports
+function gotList(thelist) {
+  console.log("List of Serial Ports:");
+  // theList is an array of their names
+  for (var i = 0; i < thelist.length; i++) {
+    // Display in the console
+    console.log(i + " " + thelist[i]);
+  }
+}
+
+// Connected to our serial device
+function gotOpen() {
+  console.log("Serial Port is Open");
+}
+
+// Ut oh, here is an error, let's log it
+function gotError(theerror) {
+  console.log(theerror);
+}
+
+
+
+// There is data available to work with from the serial port
+function gotData() {
+  var currentString = serial.readLine();  // read the incoming string
+  trim(currentString);                    // remove any trailing whitespace
+  if (!currentString) return;             // if the string is empty, do no more
+  console.log("currentString  ", currentString);             // println the string
+  latestData = currentString;            // save it for the draw method
+  console.log("latestData" + latestData);   //check to see if data is coming in
+  splitter = split(latestData, ',');       // split each number using the comma as a delimiter
+  //console.log("splitter[0]" + splitter[0]); 
+  diameter0 = splitter[0];                 //put the first sensor's data into a variable
+  diameter1 = splitter[1];
+  diameter2 = splitter[2]; 
+  diameter3 = splitter[3];
+}
+
+// We got raw data from the serial port
+function gotRawData(thedata) {
+  println("gotRawData" + thedata);
+}
+
+// Methods available
+// serial.read() returns a single byte of data (first in the buffer)
+// serial.readChar() returns a single char 'A', 'a'
+// serial.readBytes() returns all of the data available as an array of bytes
+// serial.readBytesUntil('\n') returns all of the data available until a '\n' (line break) is encountered
+// serial.readString() retunrs all of the data available as a string
+// serial.readStringUntil('\n') returns all of the data available as a string until a specific string is encountered
+// serial.readLine() calls readStringUntil with "\r\n" typical linebreak carriage return combination
+// serial.last() returns the last byte of data from the buffer
+// serial.lastChar() returns the last byte of data from the buffer as a char
+// serial.clear() clears the underlying serial buffer
+// serial.available() returns the number of bytes available in the buffer
+// serial.write(somevar) writes out the value of somevar to the serial device
+
+
+function draw() {
+  
+  let v = map(diameter2, 0, 1023, 1, 0);
+  song.volume(v);
+  
+  amp.setInput(song);
+  var vol = amp.getLevel() * 1000;
+  console.log(diameter3);
+
+  if (diameter1 <= 17) {
+    c = map(vol, 0, 115, 166, 266);
+  } else if (diameter1 > 17) {
+    c = map(vol, 0, 115, 0, 66);
+  } 
+
+  if (diameter0 == 1) {
+    w = random(width);
+    h = random(height);
+    w2 = random(width);
+    h2 = random(height);
+  }
+   
+  colorMode(HSB);
+  noStroke();
+  fill(c, 255, diameter3);
+  ellipse(w, h, vol * 4);
+
+  noStroke();
+  fill(c, 255, diameter3);
+  ellipse(w2, h2, vol * 4);
+
+  
+  background(0, 0.2);
+  fill(255);
+  text("Try experimenting with the butoon, dial, light sensor, and temperature sensor", 10, 20);
+ 
+}
+
+
+function mouseClicked(){
+  song.play();
+  if (getAudioContext().state !== 'running') {
+    getAudioContext().resume();
+    console.log("getAudioContext().state" + getAudioContext().state);
+  }
+};
