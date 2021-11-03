@@ -1,3 +1,8 @@
+/* 
+November 2021 - Julia Correia
+create effect of fire emerging from hand
+*/
+
 particles = [];
 let ready = false;
 
