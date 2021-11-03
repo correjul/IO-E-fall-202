@@ -1,6 +1,9 @@
 /* 
 November 2021 - Julia Correia
 create effect of fire emerging from hand
+
+inspired by project by Julia Correia submitted to Mark Shufflebottom for Interactive Media Project 3
+shares the concept of combining posenet with particles using new code learned from thecodingtrain.com
 */
 
 particles = [];
